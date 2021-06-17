@@ -30,7 +30,6 @@ namespace ODataFilters.WebApi.Controllers
 
         // GET: api/Products/5
         [HttpGet("{id}")]
-        [EnableQuery]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
