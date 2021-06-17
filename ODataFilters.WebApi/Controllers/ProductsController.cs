@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ namespace ODataFilters.WebApi.Controllers
 
         // GET: api/Products
         [HttpGet]
+        [EnableQuery(PageSize = 10)]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
             return await _context.Products.ToListAsync();
@@ -30,6 +32,7 @@ namespace ODataFilters.WebApi.Controllers
 
         // GET: api/Products/5
         [HttpGet("{id}")]
+        [EnableQuery]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);

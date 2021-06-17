@@ -1,12 +1,15 @@
 using Microsoft.AspNet.OData.Extensions;
+using Microsoft.AspNet.OData.Formatter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using ODataFilters.Model.Data;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ODataFilters.WebApi
@@ -34,6 +37,8 @@ namespace ODataFilters.WebApi
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ODataFilters.WebApi", Version = "v1" });
             });
+
+            SetOutputFormatters(services);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,6 +62,28 @@ namespace ODataFilters.WebApi
                 endpoints.MapControllers();
                 endpoints.EnableDependencyInjection();
                 endpoints.Select().Filter().Expand().OrderBy().Count().MaxTop(50);
+            });
+        }
+
+        private static void SetOutputFormatters(IServiceCollection services)
+        {
+            services.AddMvc(op =>
+            {
+                foreach (var formatter in op.OutputFormatters
+                    .OfType<ODataOutputFormatter>()
+                    .Where(it => !it.SupportedMediaTypes.Any()))
+                {
+                    formatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("application/prs.mock-odata"));
+                }
+
+                foreach (var formatter in op.InputFormatters
+                    .OfType<ODataInputFormatter>()
+                    .Where(it => !it.SupportedMediaTypes.Any()))
+                {
+                    formatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("application/prs.mock-odata"));
+                }
             });
         }
     }
