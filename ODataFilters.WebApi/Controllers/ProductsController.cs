@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace ODataFilters.WebApi.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/v1/[controller]")]
     public class ProductsController : ControllerBase
     {
         private readonly NorthwindDbContext _context;

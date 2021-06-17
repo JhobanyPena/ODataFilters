@@ -3,6 +3,7 @@ using Microsoft.AspNet.OData.Formatter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,22 +33,28 @@ namespace ODataFilters.WebApi
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services
-                .AddControllers()
+                .AddControllers(options =>
+                {
+                    options.Conventions.Add(new GroupingByNamespaceConvention());
+                })
                 .AddNewtonsoftJson();
 
-            services.AddApiVersioning(config =>
-            {
-                config.DefaultApiVersion = new ApiVersion(1, 0);
-                config.AssumeDefaultVersionWhenUnspecified = true;
-                config.ReportApiVersions = true;
-                config.ApiVersionReader = ApiVersionReader.Combine(new HeaderApiVersionReader("x-api-version"), new QueryStringApiVersionReader("api-version"));
-            });
+            //services.AddApiVersioning(config =>
+            //{
+            //    config.DefaultApiVersion = new ApiVersion(1, 0);
+            //    config.AssumeDefaultVersionWhenUnspecified = true;
+            //    config.ReportApiVersions = true;
+            //    config.ApiVersionReader = ApiVersionReader.Combine(new HeaderApiVersionReader("x-api-version"), new QueryStringApiVersionReader("api-version"));
+            //});
 
             services.AddOData();
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ODataFilters.WebApi", Version = "v1" });
+                var titleBase = "ODataFilters";
+
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = titleBase + " v1", Version = "v1" });
+                c.SwaggerDoc("v2", new OpenApiInfo { Title = titleBase + " v2", Version = "v2" });
             });
 
             SetOutputFormatters(services);
@@ -60,7 +67,11 @@ namespace ODataFilters.WebApi
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ODataFilters.WebApi v1"));
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ODataFilters v1");
+                    c.SwaggerEndpoint("/swagger/v2/swagger.json", "ODataFilters v2");
+                });
             }
 
             app.UseHttpsRedirection();
@@ -97,6 +108,16 @@ namespace ODataFilters.WebApi
                         new MediaTypeHeaderValue("application/prs.mock-odata"));
                 }
             });
+        }
+    }
+    public class GroupingByNamespaceConvention : IControllerModelConvention
+    {
+        public void Apply(ControllerModel controller)
+        {
+            var controllerNamespace = controller.ControllerType.Namespace;
+            var apiVersion = controllerNamespace.Split(".").Last().ToLower();
+            if (!apiVersion.StartsWith("v")) { apiVersion = "v1"; }
+            controller.ApiExplorer.GroupName = apiVersion;
         }
     }
 }
