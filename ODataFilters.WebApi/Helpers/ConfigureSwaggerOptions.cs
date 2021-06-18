@@ -34,7 +34,7 @@ namespace ODataFilters.WebApi.Helpers
         {
             var info = new OpenApiInfo()
             {
-                Title = "Heroes API",
+                Title = "OData Filters API",
                 Version = description.ApiVersion.ToString()
             };
 
