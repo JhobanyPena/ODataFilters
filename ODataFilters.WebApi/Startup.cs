@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using ODataFilters.Model.Data;
-using System.Collections.Generic;
+using ODataFilters.WebApi.Helpers;
 using System.Linq;
 
 namespace ODataFilters.WebApi
@@ -39,13 +39,16 @@ namespace ODataFilters.WebApi
                 })
                 .AddNewtonsoftJson();
 
-            //services.AddApiVersioning(config =>
-            //{
-            //    config.DefaultApiVersion = new ApiVersion(1, 0);
-            //    config.AssumeDefaultVersionWhenUnspecified = true;
-            //    config.ReportApiVersions = true;
-            //    config.ApiVersionReader = ApiVersionReader.Combine(new HeaderApiVersionReader("x-api-version"), new QueryStringApiVersionReader("api-version"));
-            //});
+            services.AddApiVersioning(config =>
+            {
+                config.DefaultApiVersion = new ApiVersion(1, 0);
+                config.AssumeDefaultVersionWhenUnspecified = true;
+                config.ReportApiVersions = true;
+                config.ApiVersionReader = ApiVersionReader.Combine(
+                    new MediaTypeApiVersionReader("version"),
+                    new QueryStringApiVersionReader("version"),
+                    new HeaderApiVersionReader("version"));
+            });
 
             services.AddOData();
 
@@ -66,13 +69,15 @@ namespace ODataFilters.WebApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ODataFilters v1");
-                    c.SwaggerEndpoint("/swagger/v2/swagger.json", "ODataFilters v2");
-                });
             }
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ODataFilters v1");
+                c.SwaggerEndpoint("/swagger/v2/swagger.json", "ODataFilters v2");
+            });
 
             app.UseHttpsRedirection();
 
@@ -109,15 +114,5 @@ namespace ODataFilters.WebApi
                 }
             });
         }
-    }
-    public class GroupingByNamespaceConvention : IControllerModelConvention
-    {
-        public void Apply(ControllerModel controller)
-        {
-            var controllerNamespace = controller.ControllerType.Namespace;
-            var apiVersion = controllerNamespace.Split(".").Last().ToLower();
-            if (!apiVersion.StartsWith("v")) { apiVersion = "v1"; }
-            controller.ApiExplorer.GroupName = apiVersion;
-        }
-    }
+    }    
 }

@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ODataFilters.Model.Data;
 using ODataFilters.Model.Models;
+using System.Collections.Generic;
 
 namespace ODataFilters.WebApi.Controllers.v2
 {
     [ApiController]
-    [Route("api/v2/[controller]")]
+    [ApiVersion("2.0")]
+    [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
         private readonly NorthwindDbContext _context;
@@ -21,12 +18,12 @@ namespace ODataFilters.WebApi.Controllers.v2
             _context = context;
         }
 
-        // GET: api/Products1
+        // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        [EnableQuery(PageSize = 10)]
+        public ActionResult<IEnumerable<Product>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            return _context.Products;
         }
-
     }
 }
