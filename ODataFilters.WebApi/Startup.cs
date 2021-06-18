@@ -3,14 +3,13 @@ using Microsoft.AspNet.OData.Formatter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using Microsoft.OpenApi.Models;
 using ODataFilters.Model.Data;
 using ODataFilters.WebApi.Helpers;
 using System.Linq;
@@ -33,10 +32,7 @@ namespace ODataFilters.WebApi
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services
-                .AddControllers(options =>
-                {
-                    options.Conventions.Add(new GroupingByNamespaceConvention());
-                })
+                .AddControllers()
                 .AddNewtonsoftJson();
 
             services.AddApiVersioning(config =>
@@ -52,13 +48,18 @@ namespace ODataFilters.WebApi
 
             services.AddOData();
 
-            services.AddSwaggerGen(c =>
+            services.AddVersionedApiExplorer(setup =>
             {
-                var titleBase = "ODataFilters";
-
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = titleBase + " v1", Version = "v1" });
-                c.SwaggerDoc("v2", new OpenApiInfo { Title = titleBase + " v2", Version = "v2" });
+                setup.GroupNameFormat = "'v'VVV";
+                setup.SubstituteApiVersionInUrl = true;
             });
+
+            services.AddSwaggerGen(options => {
+                // for further customization
+                // options.OperationFilter<DefaultValuesFilter>();
+            });
+
+            services.ConfigureOptions<ConfigureSwaggerOptions>(); 
 
             services.AddMvcCore(options =>
             {
@@ -74,7 +75,7 @@ namespace ODataFilters.WebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
@@ -83,10 +84,14 @@ namespace ODataFilters.WebApi
 
             app.UseSwagger();
 
-            app.UseSwaggerUI(c =>
+            app.UseSwaggerUI(options =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ODataFilters v1");
-                c.SwaggerEndpoint("/swagger/v2/swagger.json", "ODataFilters v2");
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerEndpoint(
+                        $"/swagger/{description.GroupName}/swagger.json",
+                        description.GroupName.ToUpperInvariant());
+                }
             });
 
             app.UseHttpsRedirection();
