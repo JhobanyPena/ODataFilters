@@ -60,7 +60,17 @@ namespace ODataFilters.WebApi
                 c.SwaggerDoc("v2", new OpenApiInfo { Title = titleBase + " v2", Version = "v2" });
             });
 
-            SetOutputFormatters(services);
+            services.AddMvcCore(options =>
+            {
+                foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+                {
+                    outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+                }
+                foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+                {
+                    inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -92,27 +102,5 @@ namespace ODataFilters.WebApi
                 endpoints.Select().Filter().Expand().OrderBy().Count().MaxTop(50);
             });
         }
-
-        private static void SetOutputFormatters(IServiceCollection services)
-        {
-            services.AddMvc(op =>
-            {
-                foreach (var formatter in op.OutputFormatters
-                    .OfType<ODataOutputFormatter>()
-                    .Where(it => !it.SupportedMediaTypes.Any()))
-                {
-                    formatter.SupportedMediaTypes.Add(
-                        new MediaTypeHeaderValue("application/prs.mock-odata"));
-                }
-
-                foreach (var formatter in op.InputFormatters
-                    .OfType<ODataInputFormatter>()
-                    .Where(it => !it.SupportedMediaTypes.Any()))
-                {
-                    formatter.SupportedMediaTypes.Add(
-                        new MediaTypeHeaderValue("application/prs.mock-odata"));
-                }
-            });
-        }
-    }    
+    }
 }
