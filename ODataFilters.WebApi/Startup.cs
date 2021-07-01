@@ -104,7 +104,7 @@ namespace ODataFilters.WebApi
             {
                 endpoints.MapControllers();
                 endpoints.EnableDependencyInjection();
-                endpoints.Select().Filter().Expand().OrderBy().Count().MaxTop(50);
+                endpoints.Select().Filter().Expand().OrderBy().MaxTop(10).Count();
             });
         }
     }

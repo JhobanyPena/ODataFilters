@@ -66,6 +66,8 @@ namespace ODataFilters.WebApiv2
         {
             var builder = new ODataConventionModelBuilder();
             builder.EntitySet<Customer>("Customers");
+            builder.EntitySet<Product>("Products");
+
             return builder.GetEdmModel();
         }
     }
