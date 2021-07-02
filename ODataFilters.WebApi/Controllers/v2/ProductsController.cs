@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNet.OData;
-using Microsoft.AspNet.OData.Query;
+﻿using Microsoft.AspNet.OData.Query;
 using Microsoft.AspNetCore.Mvc;
 using ODataFilters.Model.Data;
 using ODataFilters.Model.Models;
-using System.Collections.Generic;
-using System.Linq;
+using ODataFilters.WebApi.Extensions;
 
 namespace ODataFilters.WebApi.Controllers.v2
 {
@@ -34,14 +32,7 @@ namespace ODataFilters.WebApi.Controllers.v2
         {
             var query = _context.Products;
 
-            var items = ops.ApplyTo(query, new ODataQuerySettings() { PageSize = 10 });
-            var count = ops.Count?.GetEntityCount(ops.Filter?.ApplyTo(query, new ODataQuerySettings()) ?? query);
-
-            return Ok(new
-            {
-                Count = count,
-                Items = items
-            });
+            return Ok(query.ToDataSourceResult(ops, Request));
         }
     }
 }
